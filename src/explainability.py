@@ -20,7 +20,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Local imports
-from src.models import GAN, MaskedLinear
+from src.MicroKPNN_CF_models import GAN, MaskedLinear
 from src.data_utils import get_data
 
 # ---------------------------------------------------------------------

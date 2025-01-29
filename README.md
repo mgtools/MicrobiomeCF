@@ -19,7 +19,7 @@ conda activate MicroKPNN_cf
 # Update the file paths in `scripts/main.py` if needed.
 
 # Train the model
-python scripts/main.py
+python scripts/MicroKPNN_CF_main.py
 
 # Generate SHAP-based explainability results
 python src/explainability.py

@@ -19,7 +19,7 @@ from sklearn.model_selection import StratifiedKFold
 
 # Local imports
 from src.data_utils import get_data
-from src.models import GAN, PearsonCorrelationLoss
+from src.MicroKPNN_CF_models import GAN, PearsonCorrelationLoss
 from src.train import train_model
 from src.utils import create_stratified_dataloader
 
