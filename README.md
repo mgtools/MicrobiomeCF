@@ -4,7 +4,7 @@
 
 **MicroKPNN_cf** is a PyTorch-based framework designed to tackle confounder effects in metagenomic classification tasks. It integrates **hierarchical masking** and **correlation-based losses** to reduce dependency on confounders, ensuring robust classification.
 
-## Quick Start
+## Quick Starttt
 
 ```bash
 # Clone the repository and navigate into the project directory
@@ -19,7 +19,7 @@ conda activate MicroKPNN_cf
 # Update the file paths in `scripts/main.py` if needed.
 
 # Train the model
-python scripts/main.py
+python scripts/MicroKPNN_CF_main.py
 
 # Generate SHAP-based explainability results
 python src/explainability.py

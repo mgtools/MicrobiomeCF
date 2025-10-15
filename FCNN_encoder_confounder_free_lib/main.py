@@ -16,9 +16,10 @@ from config import config
 import random
 import os
 
+
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
 # Select device from config.
-
+device = torch.device(config["training"].get("device", "cpu"))
 
 def plot_confusion_matrix(conf_matrix, title, save_path, class_names=None):
     disp = ConfusionMatrixDisplay(confusion_matrix=conf_matrix, display_labels=class_names)
@@ -26,25 +27,6 @@ def plot_confusion_matrix(conf_matrix, title, save_path, class_names=None):
     plt.title(title)
     plt.savefig(save_path)
     plt.close()
-
-def build_mask(edge_list, species):
-    # generate the mask
-        edge_df = pd.read_csv(edge_list)
-        
-        edge_df['parent'] = edge_df['parent'].astype(str)
-        parent_nodes = sorted(set(edge_df['parent'].tolist()))  # Sort to ensure consistent order
-        mask = torch.zeros(len(species), len(parent_nodes))
-        child_nodes = species
-
-        parent_dict = {k: i for i, k in enumerate(parent_nodes)}
-        child_dict = {k: i for i, k in enumerate(child_nodes)}
-        
-        for i, row in edge_df.iterrows():
-            if row['child'] != 'Unnamed: 0': 
-                mask[child_dict[str(row['child'])]][parent_dict[row['parent']]] = 1
-
-        return mask.T, parent_dict
-    
 
 def main():
 
@@ -65,22 +47,20 @@ def main():
     # 5) (Optional) Enforce PyTorch to error on nondeterministic ops
     torch.use_deterministic_algorithms(True)
 
-    os.makedirs("Results/MicroKPNN_encoder_confounder_free_plots", exist_ok=True)
+    os.makedirs("Results/FCNN_encoder_confounder_free_plots", exist_ok=True)
 
     # Extract parameters from config.
     model_cfg = config["model"]
     train_cfg = config["training"]
     data_cfg = config["data"]
 
-    default_device = "cuda" if torch.cuda.is_available() else "cpu"
-    device = torch.device(train_cfg.get("device", default_device))
-
     # Get the column names for disease and confounder.
     disease_col = data_cfg["disease_column"]
     confounder_col = data_cfg["confounder_column"]
 
-     # Load training and test data using the CLR transform.
-    merged_data_all, merged_test_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"], data_cfg["test_abundance_path"], data_cfg["test_metadata_path"])
+    # Load training and test data using the CLR transform.
+    merged_data_all, merged_test_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"], 
+                                                        data_cfg["test_abundance_path"], data_cfg["test_metadata_path"])
 
     # Define feature columns (exclude metadata columns and SampleID).
     metadata_columns = pd.read_csv(data_cfg["train_metadata_path"]).columns.tolist()
@@ -119,26 +99,10 @@ def main():
     train_metrics_per_fold = []
     val_metrics_per_fold = []
     test_metrics_per_fold = []
-    pred_probs = [] # DELONG: Save the predicted probabilities of the best epoch.Add commentMore actions
+    pred_probs = [] # DELONG: Save the predicted probabilities of the best epoch.
     labels = [] # DELONG: Save all the labels.
     sample_ids = [] # DELONG: Save the test IDs for each fold.
     best_epoch = [] # DELONG: We can get best epoch from training, rather than picking it from all the epochs' results.
-
-    ###############added
-
-    edge_list = f"Results/MicroKPNN_encoder_confounder_free_plots/required_data/EdgeList.csv"
-    # Build masks
-    
-    mask, parent_dict = build_mask(edge_list, feature_columns)
-    print(mask.shape)
-    print(mask)
-    parent_df = pd.DataFrame(list(parent_dict.items()), columns=['Parent', 'Index'])
-    parent_dict_csv_path = "Results/MicroKPNN_encoder_confounder_free_plots/required_data/parent_dict_main.csv"
-    parent_df.to_csv(parent_dict_csv_path, index=False)
-
-    ########################
-    best_epoch = [] # DELONG: We can get best epoch from training, rather than picking it from all the epochs' results.
-
 
     train_conf_matrix_avg_bestepoch = 0
     val_conf_matrix_avg_bestepoch = 0
@@ -171,6 +135,11 @@ def main():
         data_test_loader = create_stratified_dataloader(x_test_disease, y_test_disease, train_cfg["batch_size"])
         data_all_test_loader = create_stratified_dataloader(x_test_all, y_test_all, train_cfg["batch_size"], 
                                     sampleid=idx_test_all) # DELONG: Include SampleID in the test DataLoader.
+        # print("hi")
+        # for x_batch, y_batch, id_batch in data_all_test_loader:
+        #     print(id_batch)
+        #     print(x_batch.shape)
+        #     print(y_batch.shape)
 
         # Compute class weights.
         num_pos_disease = y_all_train.sum().item()
@@ -184,7 +153,6 @@ def main():
 
         # Build the model using hyperparameters from config.
         model = GAN(
-            mask=mask, 
             input_size=input_size,
             latent_dim=model_cfg["latent_dim"],
             num_encoder_layers=model_cfg["num_encoder_layers"],
@@ -224,41 +192,39 @@ def main():
         )
 
         # Save model and features.
-        torch.save(Results["best_test"]["state_dict"], f"Results/MicroKPNN_encoder_confounder_free_plots/trained_model_fold{fold+1}.pth")
-        pd.Series(feature_columns).to_csv("Results/MicroKPNN_encoder_confounder_free_plots/feature_columns.csv", index=False)
+        torch.save(Results["best_test"]["state_dict"], f"Results/FCNN_encoder_confounder_free_plots/trained_model_fold{fold+1}.pth")
+        pd.Series(feature_columns).to_csv("Results/FCNN_encoder_confounder_free_plots/feature_columns.csv", index=False)
         print("Model and feature columns saved for fold", fold+1)
 
         train_metrics_per_fold.append(Results["train"])
         val_metrics_per_fold.append(Results["val"])
         test_metrics_per_fold.append(Results["test"])
 
-        pred_probs.append(Results["best_test"]["pred_probs"]) # DELONG: Save the best epoch for this fold.Add commentMore actions
+        pred_probs.append(Results["best_test"]["pred_probs"]) # DELONG: Save the best epoch for this fold.
         labels.append(Results["best_test"]["labels"]) # DELONG: Save the labels for this fold.
         sample_ids.append(Results["best_test"]["sample_id"]) # DELONG: Save the test IDs for this fold.
-        best_epoch.append(Results["best_test"]["epoch"]) # DELONG: Save the best epoch for this fold.
-        
-        # Plot per-fold confusion matrices.
+        best_epoch.append(Results["best_test"]["epoch"]-1) # DELONG: Save the best epoch for this fold.
+
+        # Plot per-fold confusion matrices. 
         plot_confusion_matrix(Results["train"]["confusion_matrix"][best_epoch[fold]],
                               title=f"Train Confusion Matrix - Fold {fold+1}",
-                              save_path=f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_train_conf_matrix.png",
+                              save_path=f"Results/FCNN_encoder_confounder_free_plots/fold_{fold+1}_train_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
         plot_confusion_matrix(Results["val"]["confusion_matrix"][best_epoch[fold]],
                               title=f"Validation Confusion Matrix - Fold {fold+1}",
-                              save_path=f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_val_conf_matrix.png",
+                              save_path=f"Results/FCNN_encoder_confounder_free_plots/fold_{fold+1}_val_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
         plot_confusion_matrix(Results["test"]["confusion_matrix"][best_epoch[fold]],
                               title=f"Test Confusion Matrix - Fold {fold+1}",
-                              save_path=f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_test_conf_matrix.png",
+                              save_path=f"Results/FCNN_encoder_confounder_free_plots/fold_{fold+1}_test_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
-
-        num_epochs_actual = len(Results["train"]["loss_history"])
-        epochs = range(1, num_epochs_actual + 1)
-
+        
         train_conf_matrix_avg_bestepoch += Results["train"]["confusion_matrix"][best_epoch[fold]]
         val_conf_matrix_avg_bestepoch += Results["val"]["confusion_matrix"][best_epoch[fold]]
         test_conf_matrix_avg_bestepoch += Results["test"]["confusion_matrix"][best_epoch[fold]]
 
-        print(train_conf_matrix_avg_bestepoch)
+        num_epochs_actual = len(Results["train"]["loss_history"])
+        epochs = range(1, num_epochs_actual + 1)
 
         # Plot metric histories for this fold.
         plt.figure(figsize=(20, 15))
@@ -333,7 +299,7 @@ def main():
         plt.legend()
 
         plt.tight_layout()
-        plt.savefig(f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_metrics.png")
+        plt.savefig(f"Results/FCNN_encoder_confounder_free_plots/fold_{fold+1}_metrics.png")
         plt.close()
 
     # --------------- Aggregate Metrics Across Folds ---------------
@@ -374,11 +340,14 @@ def main():
     val_conf_matrix_avg = [cm / n_splits for cm in val_conf_matrix_avg]
     test_conf_matrix_avg = [cm / n_splits for cm in test_conf_matrix_avg]
 
-    # # Find the best epoch for each fold. 
+
+
+    # DELONG: this is removed to the 'train' function, and the best epoch is now saved in Results.
+    # # Find the best epoch for each fold according to accuracy on validation set. 
     # best_epoch = []
     # for i in range(n_splits):
     #     best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
-
+        
     # Plot aggregated average metrics.
     plt.figure(figsize=(20, 15))
     plt.subplot(3, 3, 1)
@@ -470,78 +439,22 @@ def main():
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig("Results/MicroKPNN_encoder_confounder_free_plots/average_metrics.png")
+    plt.savefig("Results/FCNN_encoder_confounder_free_plots/average_metrics.png")
     plt.close()
 
     # Plot aggregated confusion matrices.
     plot_confusion_matrix(train_conf_matrix_avg_bestepoch/5,
                           title="Average Train Confusion Matrix",
-                          save_path="Results/MicroKPNN_encoder_confounder_free_plots/average_train_conf_matrix.png",
+                          save_path="Results/FCNN_encoder_confounder_free_plots/average_train_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])
     plot_confusion_matrix(val_conf_matrix_avg_bestepoch/5,
                           title="Average Validation Confusion Matrix",
-                          save_path="Results/MicroKPNN_encoder_confounder_free_plots/average_val_conf_matrix.png",
+                          save_path="Results/FCNN_encoder_confounder_free_plots/average_val_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])
     plot_confusion_matrix(test_conf_matrix_avg_bestepoch/5,
                           title="Average Test Confusion Matrix",
-                          save_path="Results/MicroKPNN_encoder_confounder_free_plots/average_test_conf_matrix.png",
+                          save_path="Results/FCNN_encoder_confounder_free_plots/average_test_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])
-    
-    # Save individual average metric plots
-    plot_dir = "Results/MicroKPNN_encoder_confounder_free_plots/average_individual_plots"
-    os.makedirs(plot_dir, exist_ok=True)
-
-    # Define plot data
-    metric_plot_data = [
-        ("loss_history", "Loss", "Average Phenotype Loss History"),
-        ("accuracy", "Balanced Accuracy", "Average Accuracy History"),
-        ("f1_score", "F1 Score", "Average F1 Score History"),
-        ("auc_pr", "AUCPR Score", "Average AUCPR Score History"),
-        ("precision", "Precision", "Average Precision History"),
-        ("recall", "Recall", "Average Recall History"),
-        ("gloss_history", "Loss", "Average Correlation Loss History"),
-        ("dcor_history", "Distance Correlation", "Average Distance Correlation History"),
-    ]
-
-    
-    # Plot each metric separately
-    for key, ylabel, title in metric_plot_data:
-        plt.figure()
-        if key in train_avg_metrics:
-            plt.plot(epochs, train_avg_metrics[key], label="Train Average")
-        if key in val_avg_metrics:
-            plt.plot(epochs, val_avg_metrics[key], label="Val Average")
-        if key in test_avg_metrics:
-            plt.plot(epochs, test_avg_metrics[key], label="Test Average")
-        for i, ep in enumerate(best_epoch):
-            plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.6, label=f'Best Epoch Fold {i+1}')
-
-
-        # ---- Font sizes ----
-        plt.title(title, fontsize=22)                # no bold
-        plt.xlabel("Epoch", fontsize=18)
-        plt.ylabel(ylabel, fontsize=18)
-        plt.xticks(fontsize=16)
-        plt.yticks(fontsize=16)
-
-        # ---- Legend styling ----
-        plt.legend(
-            fontsize=12, 
-            loc='upper left',
-            frameon=True,            # restore legend box
-            fancybox=False,          # keep square edges (optional)
-            edgecolor='black',       # black border
-            bbox_to_anchor=(0.02, 0.98)
-        )
-        # plt.title(title)
-        # plt.xlabel("Epoch")
-        # plt.ylabel(ylabel)
-        # plt.legend()
-        plt.tight_layout()
-        plt.savefig(f"{plot_dir}/{key}_avg.pdf")
-        plt.savefig(f"{plot_dir}/{key}_avg.png")
-        plt.close()
-
 
     avg_test_acc = test_avg_metrics["accuracy"][-1]
     print(f"Average Test Accuracy over {n_splits} folds: {avg_test_acc:.4f}")
@@ -600,19 +513,19 @@ def main():
     avg_row["Fold"] = "Average" # Correct the Fold column for the average
     avg_row["Best_Epoch"] = np.nan
     metrics_df = pd.concat([metrics_df, avg_row]) # Concatenate the original results with the average row
-
-    metrics_df.to_csv("Results/MicroKPNN_encoder_confounder_free_plots/metrics_summary.csv", index=False)
-    print("Metrics summary saved to 'Results/MicroKPNN_encoder_confounder_free_plots/metrics_summary.csv'.")
+    
+    metrics_df.to_csv("Results/FCNN_encoder_confounder_free_plots/metrics_summary.csv", index=False)
+    print("Metrics summary saved to 'Results/FCNN_encoder_confounder_free_plots/metrics_summary.csv'.")
 
     # DELONG: Save all the predicted probabilities and labels.
     pred_probs = np.concatenate(pred_probs)
     labels = np.concatenate(labels)
     sample_ids = np.concatenate(sample_ids) 
-    np.savez("Results/MicroKPNN_encoder_confounder_free_plots/test_results.npz", 
+    np.savez("Results/FCNN_encoder_confounder_free_plots/test_results.npz", 
          pred_probs=pred_probs,
          labels=labels,
          sample_ids=sample_ids)
-    print("Test results saved to 'Results/MicroKPNN_encoder_confounder_free_plots/test_results.npz'.")
+    print("Test results saved to 'Results/FCNN_encoder_confounder_free_plots/test_results.npz'.")
 
 if __name__ == "__main__":
     main()
