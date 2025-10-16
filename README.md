@@ -15,11 +15,14 @@ cd MicroKPNN_cf
 conda env create -f environment.yml
 conda activate MicroKPNN_cf
 
-# Prepare your data: Place metadata and abundance CSV files in the `data/` folder.
-# Update the file paths in `scripts/main.py` if needed.
+# Prepare your data: Place metadata and abundance CSV files in the `dataset/` folder and change the cofing script based on your data.
 
-# Train the model
-python scripts/MicroKPNN_CF_main.py
+# Train the model (FNN confounder free)
+python FNN_encoder_confounder_free_lib/main.py
+
+# Train the model (MicroKPNN confounder free)
+python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py
+python MicroKPNN_encoder_confounder_free_lib/main.py
 
 # Generate SHAP-based explainability results
-python src/explainability.py
+python MicroKPNN_encoder_confounder_free_lib/explainability.py
