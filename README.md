@@ -4,7 +4,7 @@
 
 **MicroKPNN_cf** is a PyTorch-based framework designed to tackle confounder effects in metagenomic classification tasks. It integrates **hierarchical masking** and **correlation-based losses** to reduce dependency on confounders, ensuring robust classification.
 
-## Quick Starttt
+## Quick Start
 
 ```bash
 # Clone the repository and navigate into the project directory
@@ -13,7 +13,7 @@ cd MicroKPNN_cf
 
 # Create and activate the conda environment
 conda env create -f environment.yml
-conda activate MicroKPNN_cf
+conda activate microbiome_cf
 
 # Prepare your data: Place metadata and abundance CSV files in the `dataset/` folder and change the cofing script based on your data.
 
