@@ -1,0 +1,51 @@
+/Default_Database/names.dmp
+/Default_Database/NJS16_metabolite_species_association.txt
+/Default_Database/nodes.dmp
+/Default_Database/WT_spiec-easi.filtered.annotated.gml
+dataset/MetaCardis_data/new_test_T2D_abundance_with_taxon_ids.csv
+dataset/MetaCardis_data/new_train_T2D_abundance_with_taxon_ids.csv
+# /old_repo/
+
+
+# -----------------------------
+# Data and Databases
+# -----------------------------
+# Default_Database/
+# dataset/
+Results/
+old_repo/
+
+# -----------------------------
+# Logs, outputs, and checkpoints
+# -----------------------------
+logs/
+checkpoints/
+outputs/
+*.log
+
+# -----------------------------
+# Python cache and environment
+# -----------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.ipynb_checkpoints/
+.env/
+.venv/
+*.egg-info/
+
+# -----------------------------
+# IDE / System files
+# -----------------------------
+.vscode/
+.idea/
+.DS_Store
+
+# -----------------------------
+# Miscellaneous temporary files
+# -----------------------------
+*.tmp
+*.bak
+*.swp
