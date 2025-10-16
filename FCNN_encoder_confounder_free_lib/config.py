@@ -66,38 +66,4 @@ config = {
         "batch_size": [64, 128, 256],
         "norm": ["batch", "layer"],
    },
-
-    ### pre-training 
-    "pretrain_data": {
-        "train_abundance_path": "dataset/pretrain_CRC_data/combined_abundance.csv",
-        "train_metadata_path": "dataset/pretrain_CRC_data/combined_metadata.csv",
-        "test_abundance_path": "dataset/pretrain_CRC_data/combined_abundance.csv",
-        "test_metadata_path": "dataset/pretrain_CRC_data/combined_metadata.csv",
-        "disease_column": "disease",
-        "confounder_column": "sex", 
-        "threshold_feature_sum": 20, # For filtering low-abundance samples
-    }, 
-    "pretrain_training": {
-        "num_epochs": 400,
-        "batch_size": 64,
-        "learning_rate": 0.00001,             # For reconstruction loss optimizer
-        "encoder_lr": 0.0002,                  # For encoder (e.g., for distillation phase)
-        "classifier_lr": 0.0002,              # For confounder classifier (e.g., 'drug' branch)
-
-        "weight_decay": 0, #1e-4,
-        "device": "cuda:0"                   # Change to "cpu" if GPU is unavailable
-    }, 
-    # Using the same model config as the main training
-
-    ### fine-tuning
-    "finetuning_training": {
-        "num_epochs": 100,
-        "batch_size": 64,
-        "learning_rate": 1e-05,             # For disease classifier optimizer
-        "encoder_lr": 0.0001,                 # For encoder (e.g., for distillation phase)
-        "classifier_lr": 0.001,              # For confounder classifier (e.g., 'drug' branch)
-        "weight_decay": 0, #1e-4,
-        "device": "cuda:0"                   # Change to "cpu" if GPU is unavailable
-    },
-    # Using the same data and model config as the main training
 }

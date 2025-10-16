@@ -9,7 +9,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import ConfusionMatrixDisplay
 
 from data_utils import get_data
-from models import GAN, PearsonCorrelationLoss, MSEUniformLoss, KLDivergenceLoss
+from models import GAN, PearsonCorrelationLoss
 from utils import create_stratified_dataloader
 from train import train_model
 from config import config
@@ -72,11 +72,6 @@ def main():
 
     # Overall disease classification.
     X = merged_data_all[feature_columns].values
-    # merged_data_all['combined'] = (
-    #     merged_data_all[disease_col].astype(str) +
-    #     merged_data_all[confounder_col].astype(str)
-    # )
-    # y_all = merged_data_all["combined"].values
     y_all = merged_data_all[disease_col].values
 
     # Prepare test data (for overall disease prediction).
@@ -135,11 +130,6 @@ def main():
         data_test_loader = create_stratified_dataloader(x_test_disease, y_test_disease, train_cfg["batch_size"])
         data_all_test_loader = create_stratified_dataloader(x_test_all, y_test_all, train_cfg["batch_size"], 
                                     sampleid=idx_test_all) # DELONG: Include SampleID in the test DataLoader.
-        # print("hi")
-        # for x_batch, y_batch, id_batch in data_all_test_loader:
-        #     print(id_batch)
-        #     print(x_batch.shape)
-        #     print(y_batch.shape)
 
         # Compute class weights.
         num_pos_disease = y_all_train.sum().item()
@@ -167,8 +157,6 @@ def main():
         # Define loss functions.
         # For the distillation (Pearson correlation) phase.
         criterion = PearsonCorrelationLoss().to(device)
-        # criterion = KLDivergenceLoss().to(device)
-        # criterion = MSEUniformLoss().to(device)
         # For the confounder classifier branch.
         criterion_classifier = nn.BCEWithLogitsLoss(pos_weight=pos_weight_drug).to(device)
         # For the disease classification branch.
@@ -339,15 +327,7 @@ def main():
     train_conf_matrix_avg = [cm / n_splits for cm in train_conf_matrix_avg]
     val_conf_matrix_avg = [cm / n_splits for cm in val_conf_matrix_avg]
     test_conf_matrix_avg = [cm / n_splits for cm in test_conf_matrix_avg]
-
-
-
-    # DELONG: this is removed to the 'train' function, and the best epoch is now saved in Results.
-    # # Find the best epoch for each fold according to accuracy on validation set. 
-    # best_epoch = []
-    # for i in range(n_splits):
-    #     best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
-        
+    
     # Plot aggregated average metrics.
     plt.figure(figsize=(20, 15))
     plt.subplot(3, 3, 1)
@@ -419,8 +399,6 @@ def main():
     # NEW: Plot aggregated Correlation g Loss History.
     plt.subplot(3, 3, 7)
     plt.plot(epochs, train_avg_metrics["gloss_history"], label="Train Average")
-    # plt.plot(epochs, val_avg_metrics["gloss_history"], label="Val Average")
-    # plt.plot(epochs, test_avg_metrics["gloss_history"], label="Test Average")
     plt.title("Average Correlation g Loss History")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
@@ -486,25 +464,7 @@ def main():
             best_epoch[i], 
         ]
         metrics_data.append(fold_data)
-    # avg_data = [
-    #     "Average",
-    #     train_avg_metrics["accuracy"][-1],
-    #     val_avg_metrics["accuracy"][-1],
-    #     test_avg_metrics["accuracy"][-1],
-    #     train_avg_metrics["f1_score"][-1],
-    #     val_avg_metrics["f1_score"][-1],
-    #     test_avg_metrics["f1_score"][-1],
-    #     train_avg_metrics["auc_pr"][-1],
-    #     val_avg_metrics["auc_pr"][-1],
-    #     test_avg_metrics["auc_pr"][-1],
-    #     train_avg_metrics["precision"][-1],
-    #     val_avg_metrics["precision"][-1],
-    #     test_avg_metrics["precision"][-1],
-    #     train_avg_metrics["recall"][-1],
-    #     val_avg_metrics["recall"][-1],
-    #     test_avg_metrics["recall"][-1]
-    # ]
-    # metrics_data.append(avg_data)
+
     metrics_df = pd.DataFrame(metrics_data, columns=metrics_columns)
 
     # Average metrics across folds.

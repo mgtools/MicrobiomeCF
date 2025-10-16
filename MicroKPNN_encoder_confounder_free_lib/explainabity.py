@@ -438,13 +438,22 @@ def explain_first_hidden_layer(model_paths: list, X_data: np.ndarray, parent_dic
     plt.savefig(os.path.join(RESULTS_DIR, "shap_bar_hidden_avg_folds.pdf"))
     plt.close()
 
-    # Averaged beeswarm
+    # # Averaged beeswarm
+    # plt.figure()
+    # shap.summary_plot(parent_columns_named_final, H_avg, feature_names=parent_columns_named_final, show=False)
+    # plt.title("SHAP Summary of Hidden Nodes - Averaged Across Folds")
+    # plt.tight_layout()
+    # plt.savefig(os.path.join(RESULTS_DIR, "shap_beeswarm_hidden_avg_folds.pdf"))
+    # plt.close()
+
+    # Averaged beeswarm (use shap_avg for SHAP values, H_avg for feature values)
     plt.figure()
-    shap.summary_plot(parent_columns_named_final, H_avg, feature_names=parent_columns_named_final, show=False)
+    shap.summary_plot(shap_avg, H_avg, feature_names=parent_columns_named_final, show=False)
     plt.title("SHAP Summary of Hidden Nodes - Averaged Across Folds")
     plt.tight_layout()
     plt.savefig(os.path.join(RESULTS_DIR, "shap_beeswarm_hidden_avg_folds.pdf"))
     plt.close()
+
 
     # CSV averaged
     pd.DataFrame(shap_avg, columns=parent_columns_named_final).to_csv(

@@ -98,13 +98,6 @@ def create_stratified_dataloader(x_train, y_train, batch_size, pad_incomplete=Tr
                 batch.extend(batch_indices.tolist())
                 class_cursors[label] += samples
             
-            # # Optionally pad the batch if it is smaller than batch_size.
-            # if pad_incomplete and len(batch) < batch_size:
-            #     missing = batch_size - len(batch)
-            #     extra_indices = torch.tensor(batch)[torch.randperm(len(batch))][:missing]
-            #     extra_samples = extra_indices.tolist()
-            #     batch.extend(extra_samples)
-            
             # Shuffle within the batch
             if len(batch) > 0:
                 shuffle_order = torch.randperm(len(batch))

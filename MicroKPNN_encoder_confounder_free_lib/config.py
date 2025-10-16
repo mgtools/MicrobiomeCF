@@ -1,33 +1,5 @@
 config = {
-    ### Colorectal cancer data with gender as confounder (we also can use age and bmi as confounder as well) (coming from GMrepo database)
-    # "data": {
-    #     "train_abundance_path": "dataset/CRC_data/crc_abundance_PRJEB6070.csv",
-    #     "train_metadata_path": "dataset/CRC_data/crc_metadata_PRJEB6070.csv",
-    #     "test_abundance_path": "dataset/CRC_data/crc_abundance_PRJNA397219.csv",
-    #     "test_metadata_path": "dataset/CRC_data/crc_metadata_PRJNA397219.csv",
-    #     "disease_column": "disease",
-    #     "confounder_column": "sex"
-    # },
-
-    ### Colorectal cancer data with gender as confounder (we also can use age and bmi as confounder as well) (coming from GMrepo database) with new test
-    # "data": {
-    #     "train_abundance_path": "dataset/CRC_data/new_crc_abundance_PRJEB6070.csv",
-    #     "train_metadata_path": "dataset/CRC_data/crc_metadata_PRJEB6070.csv",
-    #     "test_abundance_path": "dataset/CRC_data/crc_abundance_PRJEB27928.csv",
-    #     "test_metadata_path": "dataset/CRC_data/crc_metadata_PRJEB27928.csv",
-    #     "disease_column": "disease",
-    #     "confounder_column": "sex"
-    # },
-
-    # ### IBS data with gender as confounder (coming from GMrepo database)
-    # "data": {
-    #     "train_abundance_path": "dataset/IBS_data/new_train_filtered.csv",
-    #     "train_metadata_path": "dataset/IBS_data/train_metadata.csv",
-    #     "test_abundance_path": "dataset/IBS_data/new_test_filtered.csv",
-    #     "test_metadata_path": "dataset/IBS_data/test_metadata.csv",
-    #     "disease_column": "disease",
-    #     "confounder_column": "sex"
-    # },
+   
 
     ### T2D data with metformine as confounder (coming frm Metacardis dataset)
     "data": {
@@ -102,37 +74,4 @@ config = {
         # "batch_size": [64],
         # "norm": ["batch", "layer"]
     }, 
-
-    ### pre-training 
-    "pretrain_data": {
-        "train_abundance_path": "dataset/pretrain_CRC_data/combined_abundance.csv",
-        "train_metadata_path": "dataset/pretrain_CRC_data/combined_metadata.csv",
-        "test_abundance_path": "dataset/pretrain_CRC_data/combined_abundance.csv",
-        "test_metadata_path": "dataset/pretrain_CRC_data/combined_metadata.csv",
-        "disease_column": "disease",
-        "confounder_column": "sex", 
-        "threshold_feature_sum": 20, # For filtering low-abundance samples
-    }, 
-    "pretrain_training": {
-        "num_epochs": 400,
-        "batch_size": 64,
-        "learning_rate": 0.0001,             # For reconstruction loss optimizer
-        "encoder_lr": 0.002,                  # For encoder (e.g., for distillation phase)
-        "classifier_lr": 0.002,              # For confounder classifier (e.g., 'drug' branch)
-        "weight_decay": 0, #1e-4,
-        "device": "cuda:0"                    # Change to "cpu" if GPU is unavailable
-    }, 
-    # Using the same model config as the main training
-
-    ### fine-tuning
-    "finetuning_training": {
-        "num_epochs": 100,
-        "batch_size": 64,
-        "learning_rate": 2e-05,             # For disease classifier optimizer
-        "encoder_lr": 5e-04,                 # For encoder (e.g., for distillation phase)
-        "classifier_lr": 5e-04,              # For confounder classifier (e.g., 'drug' branch)
-        "weight_decay": 0, #1e-4,
-        "device": "cuda:0"                    # Change to "cpu" if GPU is unavailable
-    },
-    # Using the same data and model config as the main training
 }

@@ -304,11 +304,6 @@ def train_model(
         epoch_test_probs = torch.cat(epoch_test_probs)
         epoch_test_preds = torch.cat(epoch_test_preds)
 
-        # if epoch_test_preds.sum() == 0:
-        #     print(epoch_test_probs)
-        #     print(epoch_test_labels)
-        #     print("⚠️ No positive predictions in this epoch for test set.")
-
         epoch_test_labels = torch.cat(epoch_test_labels)
         test_acc = balanced_accuracy_score(epoch_test_labels, epoch_test_preds)
         test_f1 = f1_score(epoch_test_labels, epoch_test_preds, zero_division=0)

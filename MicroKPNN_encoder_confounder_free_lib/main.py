@@ -9,7 +9,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import ConfusionMatrixDisplay
 
 from data_utils import get_data
-from models import GAN, PearsonCorrelationLoss, MSEUniformLoss, KLDivergenceLoss
+from models import GAN, PearsonCorrelationLoss
 from utils import create_stratified_dataloader
 from train import train_model
 from config import config
@@ -92,11 +92,6 @@ def main():
 
     # Overall disease classification.
     X = merged_data_all[feature_columns].values
-    # merged_data_all['combined'] = (
-    #     merged_data_all[disease_col].astype(str) +
-    #     merged_data_all[confounder_col].astype(str)
-    # )
-    # y_all = merged_data_all["combined"].values
     y_all = merged_data_all[disease_col].values
 
     # Prepare test data (for overall disease prediction).
@@ -199,8 +194,7 @@ def main():
         # Define loss functions.
         # For the distillation (Pearson correlation) phase.
         criterion = PearsonCorrelationLoss().to(device)
-        # criterion = KLDivergenceLoss().to(device)
-        # criterion = MSEUniformLoss().to(device)
+
         # For the confounder classifier branch.
         criterion_classifier = nn.BCEWithLogitsLoss(pos_weight=pos_weight_drug).to(device)
         # For the disease classification branch.
@@ -374,11 +368,7 @@ def main():
     val_conf_matrix_avg = [cm / n_splits for cm in val_conf_matrix_avg]
     test_conf_matrix_avg = [cm / n_splits for cm in test_conf_matrix_avg]
 
-    # # Find the best epoch for each fold. 
-    # best_epoch = []
-    # for i in range(n_splits):
-    #     best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
-
+  
     # Plot aggregated average metrics.
     plt.figure(figsize=(20, 15))
     plt.subplot(3, 3, 1)
@@ -573,25 +563,7 @@ def main():
             best_epoch[i], 
         ]
         metrics_data.append(fold_data)
-    # avg_data = [
-    #     "Average",
-    #     train_avg_metrics["accuracy"][-1],
-    #     val_avg_metrics["accuracy"][-1],
-    #     test_avg_metrics["accuracy"][-1],
-    #     train_avg_metrics["f1_score"][-1],
-    #     val_avg_metrics["f1_score"][-1],
-    #     test_avg_metrics["f1_score"][-1],
-    #     train_avg_metrics["auc_pr"][-1],
-    #     val_avg_metrics["auc_pr"][-1],
-    #     test_avg_metrics["auc_pr"][-1],
-    #     train_avg_metrics["precision"][-1],
-    #     val_avg_metrics["precision"][-1],
-    #     test_avg_metrics["precision"][-1],
-    #     train_avg_metrics["recall"][-1],
-    #     val_avg_metrics["recall"][-1],
-    #     test_avg_metrics["recall"][-1]
-    # ]
-    # metrics_data.append(avg_data)
+    
     metrics_df = pd.DataFrame(metrics_data, columns=metrics_columns)
 
     # Average metrics across folds.
