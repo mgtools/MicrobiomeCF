@@ -20,7 +20,6 @@ old_repo/
 # -----------------------------
 *.tar.gz
 *.zip
-# *.gz
 
 # -----------------------------
 # Logs, outputs, and checkpoints
